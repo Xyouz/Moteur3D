@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+""" 
 __/\\\\____________/\\\\______________________________________________________________________________________/\\\\\\\\\\___/\\\\\\\\\\\\____        
  _\/\\\\\\________/\\\\\\____________________________________________________________________________________/\\\///////\\\_\/\\\////////\\\__       
   _\/\\\//\\\____/\\\//\\\___________________/\\\____________________________________________________________\///______/\\\__\/\\\______\//\\\_      
@@ -9,60 +9,22 @@ __/\\\\____________/\\\\________________________________________________________
       _\/\\\_____________\/\\\_\//\\\__/\\\_____\/\\\_/\\__\//\\///////___\/\\\___\/\\\_\/\\\____________________/\\\______/\\\__\/\\\_______/\\\__  
        _\/\\\_____________\/\\\__\///\\\\\/______\//\\\\\____\//\\\\\\\\\\_\//\\\\\\\\\__\/\\\___________________\///\\\\\\\\\/___\/\\\\\\\\\\\\/___ 
         _\///______________\///_____\/////_________\/////______\//////////___\/////////___\///______________________\/////////_____\////////////_____
-
-
-Moteur 3D de l'enfer.
+                                                                                                     
 PH Blelly & M Dufraisse
+A-V0.42
 
-La fonction d'import des textures est prête.
-La doc est inexistante :P
+/!\ À ne pas encore trop utiliser, un certain nombre d'accès aux classes va être modifié
+
+/!\ La doc est inexistante!
 """
 
 import pygame
 import math
 import random
 import time
-import Labyrinthe
-
-try:
-    import psutil  # Fournit des infos sur la charge du CPU
-    psutil_enabled = True
-except ImportError:
-    psutil_enabled = False
-# Var
-Unit = float(64)
-Player_height = 32
-boucle = 0
-HEIGHT = 10
-WIDTH = 10
-#Map = Labyrinthe.generation(HEIGHT, WIDTH)
-
-Map=[[1, 1, 1, 1, 1, 1],[2, 0, 0, 0, 0, 3],[2, 0, 0, 0, 0, 3],[2, 0, 0, 0, 0, 3],[4, 4, 4, 4, 4, 4]]
-#Map = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1], [1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1], [1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1], [1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1], [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1], [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1], [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1], [1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-
-PROJ_HEIGHT = 480
-PROJ_WIDTH = 640
 
 
-def pop():
-    X = 0
-    Y = 0
-    while Map[X][Y] == 1:
-        X = random.randrange(1, len(Map))
-        Y = random.randrange(1, len(Map))
-    return((X, Y))
-
-coord = pop()
-X_player = float(coord[0]*Unit + 32)
-Y_player = float(coord[1]*Unit + 32)
-FOV = 60
-Angle = 90
-dist_ecran = (float(PROJ_WIDTH)/2)/math.tan((float(FOV)/2)*math.pi / 180)
-RAY_ANGLE = float(FOV)/PROJ_WIDTH
-vit_rad = 0
-vit = 0
-murs = []
-
+DEGTORAD = math.pi/180
 
 black = (0, 0, 0)
 white = (255, 255, 255)
@@ -70,358 +32,244 @@ green = (0, 255, 0)
 red = (255, 0, 0)
 blue = (0, 0, 255)
 
-# Fonctions 3d
 
-
-def ray_cast(angle, X_player, Y_player, Map):
-
-    angle = (float(angle%360)*math.pi)/180
-    _Angle =Angle*math.pi/180
-    epsilon = 10**(-6)
-    flag = 0
-    pi =math.pi
-    tan= math.tan(angle)
-    map_width = len(Map[0]) * Unit
-    map_height= len(Map) * Unit
-    # Cas Particuliers
-    ###Cas pi/2 
-    if abs(angle -pi/2)<= epsilon:
-        flag = 1
-        Y = int(Y_player/Unit) - 1
-        X = int(X_player/Unit) 
-        while Map[Y][X] == 0:
-            Y -= 1
-        Y += 1
-        val = Map[Y][X]
-    
-    ## Cas 3*pi/2
-    elif abs(angle - 3*pi/2) <= epsilon:
-        flag = 1
-        Y = int(Y_player/Unit) + 1
-        X = int(X_player/Unit)
-        while Map[Y][X] == 0:
-            Y += 1
-        Y -= 1
-        val = Map[Y][X]
-    
-    ###Cas -pi
-    elif abs(angle - pi) <= epsilon:
-        flag = 1
-        Y = int(Y_player/Unit)
-        X = int(X_player/Unit)
-        while Map[Y][X] == 0:
-            X -= 1
-        X += 1
-        val = Map[Y][X]
-        
-    ##Cas 0
-    elif angle <= epsilon:
-        flag = 1
-        Y = int(Y_player/Unit)
-        X = int(X_player/Unit) + 1
-        while Map[Y][X] == 0:
-            X+= 1
-        X -= 1
-        val = Map[Y][X]
-        
-    if flag == 1:
-        dist = math.sqrt((X_player - X * Unit)**2 + (Y_player - Y * Unit)**2)
-        return(dist_ecran * Unit/(dist*math.cos(angle-_Angle)), 1, X % Unit,val)
-    #Fin Cas particuliers
-    
-    else:
-        ###Detection suivant les X
-        if 0 < angle < pi:
-            Y = int (Y_player / Unit)*Unit - 1
-            Xa = float(Unit)/tan
-            X = X_player +(Y_player -Y)/tan
-            while 0 < X <  map_width and Y > 0 and Map[int(float(Y)/Unit)][int(X / Unit)] == 0:
-                Y -= Unit
-                X = X + Xa
-            
-            if 0 < X < map_width and map_height > Y > 0:
-                valX = Map[int(float(Y)/Unit)][int(X / Unit)]
-            else:
-                valX = 0
-        else:
-            Y = int(Y_player / Unit)*Unit + Unit
-            Xa = -float(Unit)/tan
-            X = X_player +(Y_player -Y)/tan
-            
-            while 0 < X <  map_width and Y < map_height and Map[int(float(Y)/Unit)][int(X / Unit)] == 0:
-                Y += Unit
-                X = X + Xa
-            
-            if 0 < X < map_width and map_height > Y > 0:
-                valX = Map[int(float(Y)/Unit)][int(X / Unit)]
-            else:
-                valX = 10
-        Prct_X = X % Unit
-        distXa = math.sqrt((X - X_player)**2+(Y - Y_player)**2)
-
-    # Detection suivant les Y
-    ####A revoir
-        if  0 < angle < pi:
-            X = int(X_player / Unit)*Unit - 1
-            if angle < pi/2:
-                X += Unit + 2
-            Ya = abs (Unit * tan)
-            Y = Y_player + (X_player - X) * tan
-
-            while Y > 0 and 0 < X < map_width and Map[int(Y/Unit)][int(float(X) / Unit)] == 0:
-                if angle < pi/2:
-                    X += Unit 
-                else:
-                    X -= Unit
-                Y -= Ya
-            if 0 < X < map_width and map_height >Y > 0:
-                valY = Map[int(Y/Unit)][int(float(X) / Unit)]
-            else:
-                valY = 10
-        else:
-            X = int(X_player / Unit)*Unit - 1
-            if angle > 3 * (pi/2):
-                X += Unit + 2
-            
-            Ya = abs (Unit * tan)
-            ###Modif X - X_plyer
-            Y = Y_player + (X_player - X) * tan
-            
-            while 0 < Y < map_height and 0 < X < map_width and Map[int(Y/Unit)][int(float(X) / Unit)] == 0:
-                if angle > 3*(pi/2):
-                    X += Unit
-                else:
-                    X-= Unit
-                Y += Ya
-            if 0 < X < map_width and 0 < Y < map_height:
-                valY = Map[int(Y/Unit)][int(float(X) / Unit)]
-            else:
-                valY = 10
-
-        ###Modi dist
-        
-        distYa = math.sqrt((X - X_player) ** 2 + (Y - Y_player) ** 2) 
-        Prct_Y = Y % Unit
-        if distXa < distYa:
-            return(dist_ecran * Unit/(distXa*math.cos(angle-_Angle)), 1, Prct_X,valX)
-        else:
-            return(dist_ecran * Unit/(distYa*math.cos(angle-_Angle)), 0, Prct_Y,valY)
-
-
-
-
-
-def draw_murs(liste):
-    x = 0
-    for i in liste:
-        y_deb = int((PROJ_HEIGHT-i[0])/2)
-        y_fin = int((PROJ_HEIGHT + i[0])/2)
-        if i[1] == 0:
-            pygame.draw.line(screen, blue, [x, y_deb], [x, y_fin], 1)
-        else:
-            pygame.draw.line(screen, green, [x, y_deb], [x, y_fin], 1)
-        x = x + 1
-
-
-def draw_textures(liste):
-    x = 0
-    for i in liste:
-        y_deb = int((PROJ_HEIGHT-i[0])/2)
-        y_fin = int((PROJ_HEIGHT + i[0])/2)
-        #if i[1] == 1:
-        if i[3] != 0:
-            cropped = Texture[i[3]].subsurface(i[2], 0, 1, 64)
-            cropped = pygame.transform.scale(cropped, (1, y_fin-y_deb))
-            screen.blit(cropped, (x, y_deb))
-        #else:
-            #cropped = Texture2.subsurface(i[2], 0, 1, 64)
-            #cropped = pygame.transform.scale(cropped, (1, y_fin-y_deb))
-            #screen.blit(cropped, (x, y_deb))
-        x = x + 1
-
-
-def run(X_player, Y_player, Angle, Map, PROJ_WIDTH, RAY_ANGLE):
-    murs = []
-    for i in range(PROJ_WIDTH // 2, -PROJ_WIDTH // 2 - 1, -1):
-        murs.append(ray_cast(Angle + i * RAY_ANGLE, X_player, Y_player, Map))
-    return murs
-
-def import_texture(nom):
-    ##Crée une liste de texture à partir d'une seule image
-    text_height = 64
-    
-    text_width=64
+def import_texture(nom, height=64, width=64):
+    """
+    Crée une liste de texture à partir d'une seule image qui les regroupe.
+    """
     L=[]
     texture= pygame.image.load(nom).convert()
-    for i in range (int( texture.get_height() /text_height)):
-        for j in range (int(texture.get_width()/text_width)):
-            L.append(texture.subsurface(j * text_width,i * text_height ,text_width ,text_height))
+    for i in range (int( texture.get_height() /height)):
+        for j in range (int(texture.get_width()/width)):
+            L.append(texture.subsurface(j * width,i * height ,width ,height))
     return(L)
+
+
+def pop(Map):
+    """
+    Trouve aleatoirement un point de spawn convenable.
     
-# Pygame
+    :param Map: La carte sur laquelle on cherche un point de spawn
+    :type Map: Liste de listes de booléens
+    :return: Les coordonnes (X,Y) où l'on doit apparaitre
+    :rtype: tuple d'entiers
+    """
+    X = 0
+    Y = 0
+    while Map[X][Y] != 0:
+        X = random.randrange(1, len(Map))
+        Y = random.randrange(1, len(Map[0]))
+    return(X, Y)
 
 
-pygame.init()
-
-# Set the height and width of the screen
-size = [PROJ_WIDTH, PROJ_HEIGHT]
-#screen = pygame.display.set_mode(size)
-screen = pygame.display.set_mode(size)  # ,pygame.FULLSCREEN)
-pygame.display.set_caption("Moteur 3D")
-
-# Load texture
-Texture = import_texture('Texture_tot.bmp')
-
-font = pygame.font.SysFont('Consolas', 18, True, False)
-
-# Used to manage how fast the screen updates
-clock = pygame.time.Clock()
-
-# Variables 
-t = 0  # Temps
-tt = 0  # Temps
-fps = 42  # Nombre d'images par secondes
-vit = 0  # Vitesse
-vit_l = 0  # Vitesse latérale 
-acc = 0  # Accéleration
-acc_l = 0 # Acceleration latérale
-vit_rad = 0 # Vitesse angulaire
-
-done = False
-disp_inf = False
-c = 10
-
-#pos = pygame.mouse.get_pos()
-#xSouris_p = pos[0]
-###On place la souris au centre
-pygame.mouse.set_pos((PROJ_WIDTH//2,PROJ_HEIGHT//2))
-sensi = 40 ###Zone sans mouvement de souris
-vitesse_souris = 50
-# -------- Main Program Loop -----------
-while not done:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            done = True
-        elif event.type == pygame.KEYDOWN:
-            # Figure out if it was an arrow key. If so
-            # adjust speed.
-            if event.key == pygame.K_LEFT:
-                acc_l = 1
-            elif event.key == pygame.K_RIGHT:
-                acc_l = -1
-            elif event.key == pygame.K_UP:
-                acc = 1
-            elif event.key == pygame.K_DOWN:
-                acc = -1
-            
-            elif event.key == pygame.K_q:
-                acc_l = 1
-            elif event.key == pygame.K_d:
-                acc_l = -1
-            elif event.key == pygame.K_z:
-                acc = 1
-            elif event.key == pygame.K_s:
-                acc = -1
-            ###Pour quitter plus facilement le moteur
-            if event.key == pygame.K_ESCAPE:
-                done = True
-            
-
-        # User let up on a key
-        elif event.type == pygame.KEYUP:
-            # If it is an arrow key, reset vector back to zero
-            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT or event.key == pygame.K_q or event.key == pygame.K_d:
-                vit_l = 0
-                acc_l = 0
-            elif event.key == pygame.K_UP or event.key == pygame.K_DOWN or event.key == pygame.K_s or event.key == pygame.K_z:
-                vit = 0
-                acc = 0
-
-        ##test souris
-        pos = pygame.mouse.get_pos()[0]
-
-        diff = (PROJ_WIDTH //2 ) - pos
-        if abs(diff) < sensi:
-            vit_rad = 0
-        else:
-            vit_rad = diff /vitesse_souris
+class Scene():
+    """
+    Une classe contenant toutes les méthodes d'affichage de la scene en 3D 
+    ainsi que toutes les données relatives aux entités à afficher.
+    """
+    def __init__(self, screen, size, Map, textures, X, Y, Angle,
+                 Unit=64.0, FOV=60, player_height=32):
+        """
+        Initialise l'objet de type Scene.
         
-        ####fin test souris
-        #if pygame.mouse.get_pressed()[0]==True:
-            #pos = pygame.mouse.get_pos()
-            #x = pos[0]
-            #diff = xSouris_p - x
-            #if -200 < diff < 200:
-                #vit_rad = diff/5
-            #else:
-                #vit_rad = 0
-            #xSouris_p = x
-        #else:
-            #vit_rad = 0
-    # Modification de l'angle
-    Angle += vit_rad
-    Angle = Angle % 360
-
-    vit = vit + acc*(-7 <= vit <= 7)
-    vit_l = vit_l + acc_l*(-4 <= vit_l <= 4)
-    # Modification de la position
-    X_player_new = X_player + math.cos(Angle * math.pi / 180) * vit + math.cos((Angle+90) * math.pi / 180) * vit_l
-    Y_player_new = Y_player - math.sin(Angle * math.pi / 180) * vit - math.sin((Angle+90) * math.pi / 180) * vit_l
-    if Map[int(Y_player_new / Unit)][int(X_player_new / Unit)] == 0:
-        X_player = X_player_new
-        Y_player = Y_player_new
-    elif Map[int(Y_player_new / Unit)][int(X_player / Unit)] == 0:
-        Y_player = Y_player_new
-    elif Map[int(Y_player / Unit)][int(X_player_new / Unit)] == 0:
-        X_player = X_player_new
-    # Set the screen background
-    screen.fill(white)
-    pygame.draw.rect(screen, black, [0, PROJ_HEIGHT / 2, PROJ_WIDTH, PROJ_HEIGHT])
-    pygame.draw.rect(screen, white, [0, 0, PROJ_WIDTH, PROJ_HEIGHT / 2])
-    murs = run(X_player, Y_player, Angle, Map, PROJ_WIDTH, RAY_ANGLE)
-    #draw_murs(murs)
-    draw_textures(murs)
+        :param screen: La surface Pygame sur laquelle on affiche
+        :param size: Les dimensions de l'affichage (largeur, hauteur)
+        :param Map: La carte
+        :param textures: Les textures à utiliser
+        :param X: Position en X
+        :param Y: Position en Y
+        :param Angle: Angle de la vue
+        :param Unit: Facteur d'echelle
+        :param FOV: Champ de vision
+        :param player_height: Demander à PH
+        :type screen: pygame.Surface
+        :type size: tuple d'entier
+        :type Map: Liste de listes de booléens
+        :type textures: Liste de pygame.Surface
+        :type X: float
+        :type Y: float
+        :type Angle: float
+        :type Unit: float
+        :type FOV: float
+        """
+        self.screen = screen
+        self.Map = Map
+        self.PROJ_WIDTH, self.PROJ_HEIGHT = size
+        self.textures = textures
+        self.X_player, self.Y_player = X, Y
+        self.Angle = Angle
+        self.FOV = FOV
+        self.Unit = Unit
+        self.player_height = player_height
+        self.dist_ecran = (0.5 * self.PROJ_WIDTH)/math.tan(0.5 * self.FOV * DEGTORAD)
+        self.RAY_ANGLE = self.FOV / self.PROJ_WIDTH
+        self.dist_ec_reelle = self.dist_ecran * self.Unit
+        self.XMap = len(self.Map)
+        self.YMap = len(self.Map[0])
+        
+    def raycast(self,angle):
+        angle = (float(angle%360)*math.pi)/180
+        _Angle = self.Angle * math.pi / 180
+        epsilon = 10**(-6)
+        flag = 0
+        pi = math.pi
+        tan = math.tan(angle)
+        map_width = len(self.Map[0]) * self.Unit
+        map_height= len(self.Map) * self.Unit
+        # Cas Particuliers
+        ###Cas pi/2 
+        if abs(angle -pi/2)<= epsilon:
+            flag = 1
+            Y = int(self.Y_player/self.Unit) - 1
+            X = int(self.X_player/self.Unit) 
+            while self.Map[Y][X] == 0:
+                Y -= 1
+            Y += 1
+            val = self.Map[Y][X]
+        
+        ## Cas 3*pi/2
+        elif abs(angle - 3*pi/2) <= epsilon:
+            flag = 1
+            Y = int(self.Y_player/self.Unit) + 1
+            X = int(self.X_player/self.Unit)
+            while self.Map[Y][X] == 0:
+                Y += 1
+            Y -= 1
+            val = self.Map[Y][X]
+        
+        ###Cas -pi
+        elif abs(angle - pi) <= epsilon:
+            flag = 1
+            Y = int(self.Y_player/self.Unit)
+            X = int(self.X_player/self.Unit)
+            while self.Map[Y][X] == 0:
+                X -= 1
+            X += 1
+            val = self.Map[Y][X]
+            
+        ##Cas 0
+        elif angle <= epsilon:
+            flag = 1
+            Y = int(self.Y_player/self.Unit)
+            X = int(self.X_player/self.Unit) + 1
+            while self.Map[Y][X] == 0:
+                X+= 1
+            X -= 1
+            val = self.Map[Y][X]
+            
+        if flag == 1:
+            dist = math.sqrt((self.X_player - X * self.Unit)**2 + (self.Y_player - Y * self.Unit)**2)
+            return(self.dist_ec_reelle/(dist*math.cos(angle-_Angle)), 1, X % self.Unit,val)
+        #Fin Cas particuliers
+        
+        else:
+            ###Detection suivant les X
+            if 0 < angle < pi:
+                Y = int (self.Y_player / self.Unit)*self.Unit - 1
+                Xa = float(self.Unit)/tan
+                X = self.X_player +(self.Y_player -Y)/tan
+                while 0 < X <  map_width and Y > 0 and self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)] == 0:
+                    Y -= self.Unit
+                    X = X + Xa
+                
+                if 0 < X < map_width and map_height > Y > 0:
+                    valX = self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)]
+                else:
+                    valX = 0
+            else:
+                Y = int(self.Y_player / self.Unit)*self.Unit + self.Unit
+                Xa = -float(self.Unit)/tan
+                X = self.X_player +(self.Y_player -Y)/tan
+                
+                while 0 < X <  map_width and Y < map_height and self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)] == 0:
+                    Y += self.Unit
+                    X = X + Xa
+                
+                if 0 < X < map_width and map_height > Y > 0:
+                    valX = self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)]
+                else:
+                    valX = 10
+            Prct_X = X % self.Unit
+            distXa = math.sqrt((X - self.X_player)**2+(Y - self.Y_player)**2)
     
-    if disp_inf and c >= 10:
-        # Render the text. "True" means anti - aliased text.
-        # Black is the color. This creates an image of the
-        # letters, but does not put it on the screen
-        fps_t = font.render("Fps: {:.0f}".format(fps), True, green)
-        angle_t = font.render("Angle: {:.1f}".format(Angle), True, green)
-        pos_t = font.render("(x, y): ({0:.1f},{1:.1f})".format(X_player, Y_player), True, green)
-        # Put the image of the text on the screen at 250x250
-        screen.blit(fps_t, [0, PROJ_HEIGHT - 60])
-        screen.blit(angle_t, [0, PROJ_HEIGHT - 40])
-        screen.blit(pos_t, [0, PROJ_HEIGHT - 20])
-        if psutil_enabled:
-            memory = psutil.virtual_memory()[2]            #Convert first element to floating number and put in temp
-            processeur = 100-psutil.cpu_times_percent()[2]
-            mem_t = font.render("RAM: {:.1f}%".format(memory), True, green)
-            proc_t = font.render("CPU: {:.1f}%".format(processeur), True, green)
-            posM_t = font.render("Map(x, y): ({0},{1})".format(int(X_player/ Unit), int(Y_player/ Unit)), True, red)
-            type_t = font.render("Etat case: {0}".format(Map[int(X_player / Unit)][int(Y_player / Unit)]), True, red)
-            screen.blit(mem_t, [PROJ_WIDTH-110, PROJ_HEIGHT - 20])
-            screen.blit(proc_t, [PROJ_WIDTH-110, PROJ_HEIGHT - 40]) 
-        c = 0
-    elif disp_inf:
-        screen.blit(fps_t, [0, PROJ_HEIGHT - 60])
-        screen.blit(angle_t, [0, PROJ_HEIGHT - 40])
-        screen.blit(pos_t, [0, PROJ_HEIGHT - 20])
-        if psutil_enabled:
-            screen.blit(mem_t, [PROJ_WIDTH-110, PROJ_HEIGHT - 20])
-            screen.blit(proc_t, [PROJ_WIDTH-110, PROJ_HEIGHT - 40]) 
-        c += 1
-    # Go ahead and update the screen with what we've drawn.
-    pygame.display.flip()
+        # Detection suivant les Y
+        ####A revoir
+            if  0 < angle < pi:
+                X = int(self.X_player / self.Unit)*self.Unit - 1
+                if angle < pi/2:
+                    X += self.Unit + 2
+                Ya = abs (self.Unit * tan)
+                Y = self.Y_player + (self.X_player - X) * tan
+    
+                while Y > 0 and 0 < X < map_width and self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)] == 0:
+                    if angle < pi/2:
+                        X += self.Unit 
+                    else:
+                        X -= self.Unit
+                    Y -= Ya
+                if 0 < X < map_width and map_height >Y > 0:
+                    valY = self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)]
+                else:
+                    valY = 10
+            else:
+                X = int(self.X_player / self.Unit)*self.Unit - 1
+                if angle > 3 * (pi/2):
+                    X += self.Unit + 2
+                
+                Ya = abs (self.Unit * tan)
+                ###Modif X - X_plyer
+                Y = self.Y_player + (self.X_player - X) * tan
+                
+                while 0 < Y < map_height and 0 < X < map_width and self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)] == 0:
+                    if angle > 3*(pi/2):
+                        X += self.Unit
+                    else:
+                        X-= self.Unit
+                    Y += Ya
+                if 0 < X < map_width and 0 < Y < map_height:
+                    valY = self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)]
+                else:
+                    valY = 10
+    
+            # Modi dist
+            
+            distYa = math.sqrt((X - self.X_player) ** 2 + (Y - self.Y_player) ** 2) 
+            Prct_Y = Y % self.Unit
+            if distXa < distYa:
+                return(self.dist_ec_reelle/(distXa*math.cos(angle-_Angle)), 1, Prct_X,valX)
+            else:
+                return(self.dist_ec_reelle/(distYa*math.cos(angle-_Angle)), 0, Prct_Y,valY)
 
-    # Limit to 20 frames per second
-    tt = time.time()
-    fps = 1/(tt - t)
-    t= time.time()
 
-    # Le nombres de fps max
-    clock.tick(20)
-
-# Be IDLE friendly. If you forget this line, the program will 'hang'
-# on exit.
-pygame.quit()
+    def update(self):
+        """
+        Met à jour l'affichage 
+        Pour plus de flexibilité le "pygame.display.flip()" est laissé
+        à la charge de l'utilisateur
+        """
+        # Le mapping est a revoir
+        dist = map((lambda i:self.raycast(self.Angle + i * self.RAY_ANGLE)), range(self.PROJ_WIDTH // 2, -self.PROJ_WIDTH // 2 - 1, -1))
+        self.screen.fill(white)
+        pygame.draw.rect(self.screen, black, [0, self.PROJ_HEIGHT / 2, self.PROJ_WIDTH, self.PROJ_HEIGHT])
+        pygame.draw.rect(self.screen, white, [0, 0, self.PROJ_WIDTH, self.PROJ_HEIGHT / 2])
+        for x, i in enumerate(dist):
+            y_deb = int((self.PROJ_HEIGHT-i[0])/2)
+            y_fin = int((self.PROJ_HEIGHT + i[0])/2)
+            #if i[1] == 1:
+            if i[3] != 0:
+                cropped = self.textures[i[3]].subsurface(i[2], 0, 1, 64)
+                cropped = pygame.transform.scale(cropped, (1, y_fin-y_deb))
+                self.screen.blit(cropped, (x, y_deb))
+    
+#    def getX_player(self):
+#        return self.X_player
+#    
+#    def setX_player(self, value):
+#        self.X_player = value
+#    
+#    X_player = property(getX_player, setX_player)
+#    
+#    def getAngle(self):
+#        return self.Angle
+           
+            
