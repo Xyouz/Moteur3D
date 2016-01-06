@@ -270,11 +270,7 @@ screen = pygame.display.set_mode(size)  # ,pygame.FULLSCREEN)
 pygame.display.set_caption("Moteur 3D")
 
 # Load texture
-#Texture = import_texture('Texture_tot.bmp')
-
-Texture1 = pygame.image.load('Texture.jpg').convert()
-Texture2 = pygame.image.load('Texture2.jpg').convert()
-Texture=(Texture1, Texture1, Texture1, Texture2,Texture1, Texture1 )
+Texture = import_texture('Texture_tot.bmp')
 
 font = pygame.font.SysFont('Consolas', 18, True, False)
 
