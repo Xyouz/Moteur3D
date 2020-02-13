@@ -7,7 +7,7 @@ import pygame
 import moteur
 import math
 import time
-import Labyrinthe
+import labyrinthe
 
 
 Unit = float(64)

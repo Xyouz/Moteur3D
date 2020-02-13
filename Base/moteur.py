@@ -23,7 +23,6 @@ import math
 import random
 import time
 
-
 DEGTORAD = math.pi/180
 
 black = (0, 0, 0)
@@ -95,6 +94,7 @@ class Scene():
         self.screen = screen
         self.Map = Map
         self.PROJ_WIDTH, self.PROJ_HEIGHT = size
+        self.normal = np.zeros((self.PROJ_HEIGHT, self.PROJ_WIDTH, 3))
         self.textures = textures
         self.X_player, self.Y_player = X, Y
         self.Angle = Angle
@@ -106,7 +106,7 @@ class Scene():
         self.dist_ec_reelle = self.dist_ecran * self.Unit
         self.XMap = len(self.Map)
         self.YMap = len(self.Map[0])
-        
+    
     def raycast(self,angle):
         angle = (float(angle%360)*math.pi)/180
         _Angle = self.Angle * math.pi / 180
