@@ -22,6 +22,9 @@ import pygame
 import math
 import random
 import time
+import numpy as np
+
+import matplotlib.pyplot as plt
 
 DEGTORAD = math.pi/180
 
@@ -95,6 +98,7 @@ class Scene():
         self.Map = Map
         self.PROJ_WIDTH, self.PROJ_HEIGHT = size
         self.normal = np.zeros((self.PROJ_HEIGHT, self.PROJ_WIDTH, 3))
+        self.xyz = np.zeros_like(self.normal)
         self.textures = textures
         self.X_player, self.Y_player = X, Y
         self.Angle = Angle
@@ -108,6 +112,8 @@ class Scene():
         self.YMap = len(self.Map[0])
     
     def raycast(self,angle):
+        normalX = [0,0,0]
+        normalY = [0,0,0]
         angle = (float(angle%360)*math.pi)/180
         _Angle = self.Angle * math.pi / 180
         epsilon = 10**(-6)
@@ -126,7 +132,9 @@ class Scene():
                 Y -= 1
             Y += 1
             val = self.Map[Y][X]
-        
+            normalX = [0.,1.,0.]
+            normalY = normalX
+
         ## Cas 3*pi/2
         elif abs(angle - 3*pi/2) <= epsilon:
             flag = 1
@@ -136,7 +144,9 @@ class Scene():
                 Y += 1
             Y -= 1
             val = self.Map[Y][X]
-        
+            normalX = [0.,-1.,0.]
+            normalY = normalX
+
         ###Cas -pi
         elif abs(angle - pi) <= epsilon:
             flag = 1
@@ -146,9 +156,11 @@ class Scene():
                 X -= 1
             X += 1
             val = self.Map[Y][X]
-            
+            normalX = [1., 0., 0.]
+            normalY = normalX
+
         ##Cas 0
-        elif angle <= epsilon:
+        elif abs(angle) <= epsilon:
             flag = 1
             Y = int(self.Y_player/self.Unit)
             X = int(self.X_player/self.Unit) + 1
@@ -156,10 +168,12 @@ class Scene():
                 X+= 1
             X -= 1
             val = self.Map[Y][X]
-            
+            normalX = [-1., 0., 0.]
+            normalY = normalX
+
         if flag == 1:
             dist = math.sqrt((self.X_player - X * self.Unit)**2 + (self.Y_player - Y * self.Unit)**2)
-            return(self.dist_ec_reelle/(dist*math.cos(angle-_Angle)), 1, X % self.Unit,val)
+            return (self.dist_ec_reelle/(dist*math.cos(angle-_Angle)), 1, X % self.Unit,val), [0.,0., 0.]
         #Fin Cas particuliers
         
         else:
@@ -176,6 +190,7 @@ class Scene():
                     valX = self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)]
                 else:
                     valX = 0
+                normalX = [0., 1., 0.]
             else:
                 Y = int(self.Y_player / self.Unit)*self.Unit + self.Unit
                 Xa = -float(self.Unit)/tan
@@ -189,6 +204,7 @@ class Scene():
                     valX = self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)]
                 else:
                     valX = 10
+                normalX = [0., -1., 0.]
             Prct_X = X % self.Unit
             distXa = math.sqrt((X - self.X_player)**2+(Y - self.Y_player)**2)
     
@@ -204,8 +220,10 @@ class Scene():
                 while Y > 0 and 0 < X < map_width and self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)] == 0:
                     if angle < pi/2:
                         X += self.Unit 
+                        normalY = [-1., 0., 0.]
                     else:
                         X -= self.Unit
+                        normalY = [1., 0., 0.]
                     Y -= Ya
                 if 0 < X < map_width and map_height >Y > 0:
                     valY = self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)]
@@ -219,12 +237,14 @@ class Scene():
                 Ya = abs (self.Unit * tan)
                 ###Modif X - X_plyer
                 Y = self.Y_player + (self.X_player - X) * tan
-                
+
                 while 0 < Y < map_height and 0 < X < map_width and self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)] == 0:
                     if angle > 3*(pi/2):
                         X += self.Unit
+                        normalY = [-1., 0., 0.]
                     else:
                         X-= self.Unit
+                        normalY = [1., 0., 0.]
                     Y += Ya
                 if 0 < X < map_width and 0 < Y < map_height:
                     valY = self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)]
@@ -236,9 +256,9 @@ class Scene():
             distYa = math.sqrt((X - self.X_player) ** 2 + (Y - self.Y_player) ** 2) 
             Prct_Y = Y % self.Unit
             if distXa < distYa:
-                return(self.dist_ec_reelle/(distXa*math.cos(angle-_Angle)), 1, Prct_X,valX)
+                return self.dist_ec_reelle/(distXa*math.cos(angle-_Angle)), 1, Prct_X,valX, normalX
             else:
-                return(self.dist_ec_reelle/(distYa*math.cos(angle-_Angle)), 0, Prct_Y,valY)
+                return self.dist_ec_reelle/(distYa*math.cos(angle-_Angle)), 0, Prct_Y,valY, normalY
 
 
     def update(self):
@@ -248,10 +268,14 @@ class Scene():
         à la charge de l'utilisateur
         """
         # Le mapping est a revoir
-        dist = map((lambda i:self.raycast(self.Angle + i * self.RAY_ANGLE)), range(self.PROJ_WIDTH // 2, -self.PROJ_WIDTH // 2 - 1, -1))
+        dist = map((lambda i:self.raycast(self.Angle + (i- (self.PROJ_WIDTH // 2)) * self.RAY_ANGLE)), range(self.PROJ_WIDTH))
         self.screen.fill(white)
         pygame.draw.rect(self.screen, black, [0, self.PROJ_HEIGHT / 2, self.PROJ_WIDTH, self.PROJ_HEIGHT])
         pygame.draw.rect(self.screen, white, [0, 0, self.PROJ_WIDTH, self.PROJ_HEIGHT / 2])
+
+        self.normal[:self.PROJ_HEIGHT//2,:] = [0.,0.,-1.]
+        self.normal[self.PROJ_HEIGHT//2:,:] = [0.,0.,1.]
+
         for x, i in enumerate(dist):
             y_deb = int((self.PROJ_HEIGHT-i[0])/2)
             y_fin = int((self.PROJ_HEIGHT + i[0])/2)
@@ -260,6 +284,9 @@ class Scene():
                 cropped = self.textures[i[3]].subsurface(i[2], 0, 1, 64)
                 cropped = pygame.transform.scale(cropped, (1, y_fin-y_deb))
                 self.screen.blit(cropped, (x, y_deb))
+                self.normal[y_deb:y_fin-1, x] = i[4]
+        if random.random()<0.01:
+            np.save("normal.npy", self.normal)
     
 #    def getX_player(self):
 #        return self.X_player
