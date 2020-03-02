@@ -88,7 +88,8 @@ class LightSource():
     def set_position(self, position):
         self.position = np.array(position)
 
-def shade( normal, material, lights):
+
+def shade(normal, xyz, cam, material, lights):
     nlig, ncol, _ = normal.shape
     render = np.zeros((nlig, ncol, 3))
 
@@ -96,11 +97,11 @@ def shade( normal, material, lights):
     i = -(2*i - nlig)/nlig
     j = (2*j - ncol)/nlig
 
-    wo = np.stack((-i, -j, 1.5 * np.ones_like(i)), axis=-1)
+    wo = cam.reshape(1,1,3) - xyz
     wo = wo / np.linalg.norm(wo, axis=-1, keepdims=True)
 
     for light in lights:
-        wi = light.position - np.stack((j, i, np.zeros_like(i)), axis=-1)
+        wi = light.position - xyz
         wi = wi / np.linalg.norm(wi, axis=-1, keepdims=True)
 
         f = material.f(wo, wi, normal)
@@ -121,29 +122,7 @@ def clip_render(render, perc=5):
     return 255 * render
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--normal", help="normal map file", type=str, default="normal.png")
-    parser.add_argument("-o", "--output", help="output file", type=str, default="render.png")
-
-    parser.add_argument("-m", "--mode", help="""Select what the script does:\n
-      simple : take a normal map and renders before saving the result\n
-      video : take a normal map and save a video output with multiple lighting conditions\n
-      interactif : take a normal map and allow the interactive placement of light sources""",
-      type=str, default="simple", choices=["simple", "video", "interactif"])
-
-    parser.add_argument("-l", "--lambert", help="Use the Lambert model", action="store_true")
-    parser.add_argument("-b", "--blinn", help="Use the Blinn-Phong model", action="store_true")
-    parser.add_argument("-c", "--cook", help="Use the Cook-Torrance model", action="store_true", default=True)
-
-    parser.add_argument("--n-lights", help="Number of lights for the simple mode", type=int, default=1)
-    parser.add_argument("--n-frames", help="The number of frames to compute in video mode", type=int, default=100)
-    parser.add_argument("--fps", help="The number of fps to output in video mode", type=int, default=20)
-
-    args = parser.parse_args()
-
-    imagefile = args.normal
-    renderfile = args.output
-
+    
     
     # Define materials
     if args.cook:
@@ -158,119 +137,7 @@ if __name__ == "__main__":
     else:
         print("No material selected")
     
-    # Display normal image
-    if False:
-        plt.imshow(normalimage)
-        plt.show()
-
+    
     light_intensity = lambda : LMin + (LMax - LMin) * np.random.random(1)
     light_color = lambda : 0.5 + 0.5 *np.random.random(3)
     light_pos = lambda : [-1 + 2* random.random(),-1 + 2* random.random(),0.5]
-
-    if args.mode == "simple":
-        # Read normal image
-        normalimage = plt.imread(imagefile)[:,:,:3]
-        plt.imshow(normalimage)
-        plt.show()
-
-        mask = normalimage.max(axis=2) <= 4/255
-        normalimage = 2 * normalimage - 1
-        normalimage = normalimage / np.linalg.norm(normalimage, axis=-1, keepdims=True)
-        normalimage[mask] = 0
-
-        lights = [LightSource(light_pos(), light_color(), light_intensity()/args.n_lights) for _ in range(args.n_lights)]
-
-        render = shade(normalimage, material, lights)
-        render = clip_render(render)
-
-        plt.imshow(render)
-        plt.imsave(renderfile, render)
-        plt.show()
-    
-    elif args.mode == "interactif":
-        # Read normal image
-        normalimage = plt.imread(imagefile)[:,:,:3]
-        mask = normalimage.max(axis=2) <= 4/255
-        normalimage = 2 * normalimage - 1
-        normalimage = normalimage / np.linalg.norm(normalimage, axis=-1, keepdims=True)
-        normalimage[mask] = 0
-
-        lights = [LightSource([0.,0.,0.5], light_color(), light_intensity())]
-
-        fig, ax = plt.subplots()
-        render = shade(normalimage, material, lights)
-        render = clip_render(render)
-
-        im = plt.imshow(render)
-        nlig,ncol,_ = render.shape
-
-        def onmotion(event):
-            """
-            Changes the last light position
-            """
-            if event.xdata is None or event.ydata is None: return
-            x = (2*event.xdata-ncol)/nlig
-            y = -(2*event.ydata-nlig)/nlig
-            lights[-1].set_position([x,y,0.5])
-            render =  shade(normalimage, material, lights)
-            render = clip_render(render)
-            im.set_data(render)
-            plt.draw()
-
-        def onclick(event):
-            """
-            Create a new light
-            """
-            if event.xdata is None or event.ydata is None: return
-            x = (2*event.xdata-ncol)/nlig
-            y = -(2*event.ydata-nlig)/nlig
-            lights.append(LightSource([x,y,0.5], light_color(), light_intensity()))
-            render =  shade(normalimage, material, lights)
-            render = clip_render(render)
-            im.set_data(render)
-            plt.draw()
-
-        # def onscroll(event):
-        #     if event.xdata is None or event.ydata is None: return
-        #     x, y, z = lights[-1].position
-        #     lights[-1].set_position([x,y,z*(1 + event.step/10)])
-        #     render = material.shade(normalimage[:,:,:3],lights)
-        #     im.set_data(render)
-        #     plt.draw()
-
-        cid = fig.canvas.mpl_connect('motion_notify_event', onmotion)
-        cid = fig.canvas.mpl_connect('button_press_event', onclick)
-        # cid = fig.canvas.mpl_connect('scroll_event', onscroll)
-
-        plt.show()
-
-    elif args.mode == "video":
-        # Read normal image
-        normalimage = plt.imread(imagefile)[:,:,:3]
-        mask = normalimage.max(axis=2) <= 4/255
-        normalimage = 2 * normalimage - 1
-        normalimage = normalimage / np.linalg.norm(normalimage, axis=-1, keepdims=True)
-        normalimage[mask] = 0
-
-        files = []
-        light = LightSource([-1.,-1.,1.0], light_color(), light_intensity())
-
-        plt.figure(figsize=(15,10))
-        for i, x in enumerate(tqdm(np.linspace(-1,1,args.n_frames))):
-            y = np.sin(np.pi*x)
-            light.set_position([x,y,1.0])
-            render =  shade(normalimage, material, [light])
-            render = clip_render(render)
-            fname = "tmp-{}.png".format(i)
-            plt.imsave(fname, render)
-            files.append(fname)
-        
-        subprocess.call("mencoder 'mf://tmp-*.png' -mf type=png:fps={} -ovc lavc "
-                    "-lavcopts vcodec=mpeg4:mbd=2:trell:v4mv:turbo -oac copy -o animation.mpg".format(args.fps), shell=True)
-
-        for fname in files:
-            os.remove(fname)
-    
-    else:
-        print("Unknown mode.")
-    

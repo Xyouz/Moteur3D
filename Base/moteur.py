@@ -113,8 +113,8 @@ class Scene():
         self.YMap = len(self.Map[0])
 
         # Shader properties
-        self.material = shader.BlinnPhong([0.80,0.42,0.42],5) + shader.Lambert([0.42,0.42,0.42],2)
-        self.light = shader.LightSource([-1, 0, 1.5],
+        self.material = shader.BlinnPhong([0.80,0.42,0.42],1) # + shader.Lambert([0.42,0.42,0.42],2)
+        self.light = shader.LightSource([self.X_player, self.Y_player, 0],
                                         [1, 0.4,0.1], 0.6)
 
     
@@ -243,7 +243,7 @@ class Scene():
         self.xyz[:self.PROJ_HEIGHT//2,:,1] = np.linspace(self.dist_ecran,1000,self.PROJ_HEIGHT//2).reshape(-1,1)
         self.xyz[self.PROJ_HEIGHT//2:,:,1] = np.linspace(1000, self.dist_ecran, self.PROJ_HEIGHT//2).reshape(-1,1)
         self.xyz[:self.PROJ_HEIGHT//2,:,2] = 64
-        self.xyz[self.PROJ_HEIGHT//2:,:,2] = 0
+        self.xyz[self.PROJ_HEIGHT//2:,:,2] = -64
 
         for x, i in enumerate(dist):
             y_deb = int((self.PROJ_HEIGHT-i[0])/2)
@@ -257,14 +257,15 @@ class Scene():
                 y_fin = max(0,min(y_fin, self.PROJ_HEIGHT-1))
                 self.normal[y_deb:y_fin-1, x] = i[4]
                 self.xyz[y_deb:y_fin-1, x, :2] = [i[5], i[6]]
-                self.xyz[y_deb:y_fin-1, x, 2] = np.linspace(64, 0, y_fin-y_deb- 1)
+                self.xyz[y_deb:y_fin-1, x, 2] = np.linspace(64, -64, y_fin-y_deb- 1)
                 #self.texture[y_deb:y_fin-1, x] = cropped 
         
         self.xyz = self.xyz / 64
-        #shaded = shader.shade(self.normal, self.material, [self.light])
-        Z = shader.clip_render(self.xyz[:,:,2])
+        shaded = shader.shade(self.normal, self.xyz, np.array([self.X_player/64, self.Y_player/64, 0]),
+                                 self.material, [self.light])
+        Z = shader.clip_render(shaded)
 
-        surf = pygame.surfarray.make_surface(Z.T)#.transpose(1,0,2))
+        surf = pygame.surfarray.make_surface(Z.transpose(1,0,2))
         self.screen.blit(surf, (0, 0))
 
 
@@ -280,7 +281,7 @@ class Scene():
             self.Y_player = y
         elif self.Map[int(self.Y_player / self.Unit)][int(x / self.Unit)] == 0:
             self.X_player = x
-        # self.light.set_position([0, 0, 0.5])
+        self.light.set_position([self.X_player, self.Y_player, 0])
 
     position = property(get_position, set_position)
 #    def getX_player(self):
