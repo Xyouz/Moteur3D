@@ -218,7 +218,7 @@ class Scene():
         dispDist = self.dist_ec_reelle/(mindist*math.cos(angle-_Angle))
         #dispDist = self.dist_ec_reelle/mindist
         
-        return dispDist,1 ,2 , minval, minnorm
+        return dispDist,1 ,2 , minval, minnorm, minx, miny
 
 
     def update(self):
@@ -239,6 +239,12 @@ class Scene():
         self.normal[:self.PROJ_HEIGHT//2,:] = [0.,0.,-1.]
         self.normal[self.PROJ_HEIGHT//2:,:] = [0.,0.,1.]
 
+        self.xyz[:,:,0] = np.linspace(-1,1,self.PROJ_WIDTH).reshape(1,-1)
+        self.xyz[:self.PROJ_HEIGHT//2,:,1] = np.linspace(self.dist_ecran,1000,self.PROJ_HEIGHT//2).reshape(-1,1)
+        self.xyz[self.PROJ_HEIGHT//2:,:,1] = np.linspace(1000, self.dist_ecran, self.PROJ_HEIGHT//2).reshape(-1,1)
+        self.xyz[:self.PROJ_HEIGHT//2,:,2] = 64
+        self.xyz[self.PROJ_HEIGHT//2:,:,2] = 0
+
         for x, i in enumerate(dist):
             y_deb = int((self.PROJ_HEIGHT-i[0])/2)
             y_fin = int((self.PROJ_HEIGHT + i[0])/2)
@@ -247,13 +253,18 @@ class Scene():
                 #cropped = self.textures[i[3]].subsurface(i[2], 0, 1, 64)
                 #cropped = pygame.transform.scale(cropped, (1, y_fin-y_deb))
                 #self.screen.blit(cropped, (x, y_deb))
+                y_deb = max(0,min(y_deb, self.PROJ_HEIGHT-1))
+                y_fin = max(0,min(y_fin, self.PROJ_HEIGHT-1))
                 self.normal[y_deb:y_fin-1, x] = i[4]
+                self.xyz[y_deb:y_fin-1, x, :2] = [i[5], i[6]]
+                self.xyz[y_deb:y_fin-1, x, 2] = np.linspace(64, 0, y_fin-y_deb- 1)
                 #self.texture[y_deb:y_fin-1, x] = cropped 
         
-        shaded = shader.shade(self.normal, self.material, [self.light])
-        Z = shader.clip_render(shaded)
+        self.xyz = self.xyz / 64
+        #shaded = shader.shade(self.normal, self.material, [self.light])
+        Z = shader.clip_render(self.xyz[:,:,2])
 
-        surf = pygame.surfarray.make_surface(Z.transpose(1,0,2))
+        surf = pygame.surfarray.make_surface(Z.T)#.transpose(1,0,2))
         self.screen.blit(surf, (0, 0))
 
 
