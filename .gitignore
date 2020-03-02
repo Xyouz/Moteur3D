@@ -1,2 +1,5 @@
 # Cpython
 *.cpython-36.pyc
+
+# Npy file
+*.npy
