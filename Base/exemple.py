@@ -111,13 +111,8 @@ while not done:
     # Modification de la position
     X_player_new = sc.X_player + math.cos(sc.Angle * math.pi / 180) * vit + math.cos((sc.Angle+90) * math.pi / 180) * vit_l
     Y_player_new = sc.Y_player - math.sin(sc.Angle * math.pi / 180) * vit - math.sin((sc.Angle+90) * math.pi / 180) * vit_l
-    if Map[int(Y_player_new / Unit)][int(X_player_new / Unit)] == 0:
-        sc.X_player = X_player_new
-        sc.Y_player = Y_player_new
-    elif Map[int(Y_player_new / Unit)][int(sc.X_player / Unit)] == 0:
-        sc.Y_player = Y_player_new
-    elif Map[int(sc.Y_player / Unit)][int(X_player_new / Unit)] == 0:
-        sc.X_player = X_player_new
+    
+    sc.position = (X_player_new, Y_player_new)
 
     sc.update()
     fps_t = font.render("Fps: {:.0f}".format(fps), False, green)

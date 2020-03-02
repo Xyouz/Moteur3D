@@ -111,6 +111,12 @@ class Scene():
         self.dist_ec_reelle = self.dist_ecran * self.Unit
         self.XMap = len(self.Map)
         self.YMap = len(self.Map[0])
+
+        # Shader properties
+        self.material = shader.BlinnPhong([0.80,0.42,0.42],5) + shader.Lambert([0.42,0.42,0.42],2)
+        self.light = shader.LightSource([-1, 0, 1.5],
+                                        [1, 0.4,0.1], 0.6)
+
     
     def raycast(self,angle):
         _Angle = self.Angle * DEGTORAD
@@ -244,10 +250,28 @@ class Scene():
                 self.normal[y_deb:y_fin-1, x] = i[4]
                 #self.texture[y_deb:y_fin-1, x] = cropped 
         
-        Z = 255*(1 + self.normal) / 2
+        shaded = shader.shade(self.normal, self.material, [self.light])
+        Z = shader.clip_render(shaded)
+
         surf = pygame.surfarray.make_surface(Z.transpose(1,0,2))
         self.screen.blit(surf, (0, 0))
 
+
+    def get_position(self):
+        return self.X_player, self.Y_player
+    
+    def set_position(self, pos):
+        x, y = pos
+        if self.Map[int(y / self.Unit)][int(x / self.Unit)] == 0:
+            self.X_player = x
+            self.Y_player = y
+        elif self.Map[int(y / self.Unit)][int(self.X_player / self.Unit)] == 0:
+            self.Y_player = y
+        elif self.Map[int(self.Y_player / self.Unit)][int(x / self.Unit)] == 0:
+            self.X_player = x
+        # self.light.set_position([0, 0, 0.5])
+
+    position = property(get_position, set_position)
 #    def getX_player(self):
 #        return self.X_player
 #    
