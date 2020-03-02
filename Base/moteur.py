@@ -248,10 +248,6 @@ class Scene():
         surf = pygame.surfarray.make_surface(Z.transpose(1,0,2))
         self.screen.blit(surf, (0, 0))
 
-        if random.random()<0.01:
-            print("saving normalmap")
-            np.save("normal.npy", self.normal)
-    
 #    def getX_player(self):
 #        return self.X_player
 #    
