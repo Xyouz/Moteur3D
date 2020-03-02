@@ -95,7 +95,7 @@ class Scene():
         :type FOV: float
         """
         self.screen = screen
-        self.Map = Map
+        self.Map = np.array(Map)
         self.PROJ_WIDTH, self.PROJ_HEIGHT = size
         self.normal = np.zeros((self.PROJ_HEIGHT, self.PROJ_WIDTH, 3))
         self.xyz = np.zeros_like(self.normal)
@@ -112,153 +112,106 @@ class Scene():
         self.YMap = len(self.Map[0])
     
     def raycast(self,angle):
-        normalX = [0,0,0]
-        normalY = [0,0,0]
-        angle = (float(angle%360)*math.pi)/180
-        _Angle = self.Angle * math.pi / 180
-        epsilon = 10**(-6)
-        flag = 0
-        pi = math.pi
-        tan = math.tan(angle)
-        map_width = len(self.Map[0]) * self.Unit
-        map_height= len(self.Map) * self.Unit
-        # Cas Particuliers
-        ###Cas pi/2 
-        if abs(angle -pi/2)<= epsilon:
-            flag = 1
-            Y = int(self.Y_player/self.Unit) - 1
-            X = int(self.X_player/self.Unit) 
-            while self.Map[Y][X] == 0:
-                Y -= 1
-            Y += 1
-            val = self.Map[Y][X]
-            normalX = [0.,1.,0.]
-            normalY = normalX
+        _Angle = self.Angle * DEGTORAD
 
-        ## Cas 3*pi/2
-        elif abs(angle - 3*pi/2) <= epsilon:
-            flag = 1
-            Y = int(self.Y_player/self.Unit) + 1
-            X = int(self.X_player/self.Unit)
-            while self.Map[Y][X] == 0:
-                Y += 1
-            Y -= 1
-            val = self.Map[Y][X]
-            normalX = [0.,-1.,0.]
-            normalY = normalX
+        angle = angle * DEGTORAD
 
-        ###Cas -pi
-        elif abs(angle - pi) <= epsilon:
-            flag = 1
-            Y = int(self.Y_player/self.Unit)
-            X = int(self.X_player/self.Unit)
-            while self.Map[Y][X] == 0:
-                X -= 1
-            X += 1
-            val = self.Map[Y][X]
-            normalX = [1., 0., 0.]
-            normalY = normalX
+        sins = np.sin(angle) >= 0
+        coss = np.cos(angle) >= 0
+        # Remplacer tan par sin/cos
+        tan = np.tan(angle)        
 
-        ##Cas 0
-        elif abs(angle) <= epsilon:
-            flag = 1
-            Y = int(self.Y_player/self.Unit)
-            X = int(self.X_player/self.Unit) + 1
-            while self.Map[Y][X] == 0:
-                X+= 1
-            X -= 1
-            val = self.Map[Y][X]
-            normalX = [-1., 0., 0.]
-            normalY = normalX
 
-        if flag == 1:
-            dist = math.sqrt((self.X_player - X * self.Unit)**2 + (self.Y_player - Y * self.Unit)**2)
-            return (self.dist_ec_reelle/(dist*math.cos(angle-_Angle)), 1, X % self.Unit,val), [0.,0., 0.]
-        #Fin Cas particuliers
-        
-        else:
-            ###Detection suivant les X
-            if 0 < angle < pi:
-                Y = int (self.Y_player / self.Unit)*self.Unit - 1
-                Xa = float(self.Unit)/tan
-                X = self.X_player +(self.Y_player -Y)/tan
-                while 0 < X <  map_width and Y > 0 and self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)] == 0:
-                    Y -= self.Unit
-                    X = X + Xa
-                
-                if 0 < X < map_width and map_height > Y > 0:
-                    valX = self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)]
-                else:
-                    valX = 0
-                normalX = [0., 1., 0.]
-            else:
-                Y = int(self.Y_player / self.Unit)*self.Unit + self.Unit
-                Xa = -float(self.Unit)/tan
-                X = self.X_player +(self.Y_player -Y)/tan
-                
-                while 0 < X <  map_width and Y < map_height and self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)] == 0:
-                    Y += self.Unit
-                    X = X + Xa
-                
-                if 0 < X < map_width and map_height > Y > 0:
-                    valX = self.Map[int(float(Y)/self.Unit)][int(X / self.Unit)]
-                else:
-                    valX = 10
-                normalX = [0., -1., 0.]
-            Prct_X = X % self.Unit
-            distXa = math.sqrt((X - self.X_player)**2+(Y - self.Y_player)**2)
-    
-        # Detection suivant les Y
-        ####A revoir
-            if  0 < angle < pi:
-                X = int(self.X_player / self.Unit)*self.Unit - 1
-                if angle < pi/2:
-                    X += self.Unit + 2
-                Ya = abs (self.Unit * tan)
-                Y = self.Y_player + (self.X_player - X) * tan
-    
-                while Y > 0 and 0 < X < map_width and self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)] == 0:
-                    if angle < pi/2:
-                        X += self.Unit 
-                        normalY = [-1., 0., 0.]
-                    else:
-                        X -= self.Unit
-                        normalY = [1., 0., 0.]
-                    Y -= Ya
-                if 0 < X < map_width and map_height >Y > 0:
-                    valY = self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)]
-                else:
-                    valY = 10
-            else:
-                X = int(self.X_player / self.Unit)*self.Unit - 1
-                if angle > 3 * (pi/2):
-                    X += self.Unit + 2
-                
-                Ya = abs (self.Unit * tan)
-                ###Modif X - X_plyer
-                Y = self.Y_player + (self.X_player - X) * tan
+        ray_c = - self.X_player * tan + self.Y_player
 
-                while 0 < Y < map_height and 0 < X < map_width and self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)] == 0:
-                    if angle > 3*(pi/2):
-                        X += self.Unit
-                        normalY = [-1., 0., 0.]
-                    else:
-                        X-= self.Unit
-                        normalY = [1., 0., 0.]
-                    Y += Ya
-                if 0 < X < map_width and 0 < Y < map_height:
-                    valY = self.Map[int(Y/self.Unit)][int(float(X) / self.Unit)]
-                else:
-                    valY = 10
-    
-            # Modi dist
+        mindist = np.inf
+        minval = 0
+        minx = 0
+        miny = 0
+        minnorm = None
+
+        for i,j in np.ndindex(*self.Map.shape):
+            val = self.Map[i,j]
+            if val == 0:
+                continue
+            # corners = np.array([[self.Unit*i, self.Unit*j],
+            #            [self.Unit*(i+1), self.Unit*j],
+            #            [self.Unit*i, self.Unit*(j+1)],
+            #            [self.Unit*(i+1), self.Unit*(j+1)]])
+            # vectc = corners - [self.X_player, self.Y_player]
+            # cosc = vectc[:,0] / np.linalg.norm(vectc, axis=1)
+            # anglc = np.sign(vectc[:,1]) * np.arccos(cosc) /DEGTORAD
+
+            # if angle < min(anglc) or angle > max(anglc):
+            #     continue
             
-            distYa = math.sqrt((X - self.X_player) ** 2 + (Y - self.Y_player) ** 2) 
-            Prct_Y = Y % self.Unit
-            if distXa < distYa:
-                return self.dist_ec_reelle/(distXa*math.cos(angle-_Angle)), 1, Prct_X,valX, normalX
-            else:
-                return self.dist_ec_reelle/(distYa*math.cos(angle-_Angle)), 0, Prct_Y,valY, normalY
+            dist = np.inf
+
+            # Left side
+            x = j * self.Unit
+            y = tan * x + ray_c
+            
+            # print(j * self.Unit, y, (j+1)*self.Unit)
+            if i * self.Unit <= y <= (i+1) * self.Unit:
+                dx, dy = x - self.X_player, y - self.Y_player
+                if (dx >= 0) == coss and (dy >= 0) == sins: 
+                    dist = np.hypot(dx, dy)
+                    normal = [-1, 0, 0]
+            
+            # Right side
+            x = (j + 1) * self.Unit
+            y = tan * x + ray_c
+
+            if i * self.Unit <= y <= (i+1) * self.Unit:
+                dx, dy = x - self.X_player, y - self.Y_player
+                if (dx >= 0) == coss and (dy >= 0) == sins: 
+
+                    dist_c = np.hypot(dx, dy)
+
+                    if dist_c < dist :
+                        dist = dist_c
+                        normal = [1, 0, 0]
+            
+            # Top side
+            y = (i + 1) * self.Unit
+            x = (y - ray_c) / tan
+
+            if j * self.Unit <= x <= (j+1) * self.Unit:
+                dx, dy = x - self.X_player, y - self.Y_player
+
+                if (dx >= 0) == coss and (dy >= 0) == sins: 
+                    dist_c = np.hypot(dx, dy)
+                    
+                    if dist_c < dist:
+                        dist = dist_c
+                        normal = [0, 1, 0]
+            
+            
+            # Bottom side
+            y = i * self.Unit
+            x = (y - ray_c) / tan
+
+            if j * self.Unit <= x <= (j+1) * self.Unit:
+                dx, dy = x - self.X_player, y - self.Y_player
+
+                if (dx >= 0) == coss and (dy >= 0) == sins: 
+                    dist_c = np.hypot(dx, dy)
+                    
+                    if dist_c < dist:
+                        dist = dist_c
+                        normal = [0, -1, 0]
+            
+            if mindist > dist:
+                mindist = dist
+                minx, miny = x,y
+                minnorm = normal
+                minval = val
+
+        # Abs rajouté artificiellement
+        dispDist = self.dist_ec_reelle/(mindist*math.cos(angle-_Angle))
+        #dispDist = self.dist_ec_reelle/mindist
+        
+        return dispDist,1 ,2 , minval, minnorm
 
 
     def update(self):
@@ -286,6 +239,7 @@ class Scene():
                 self.screen.blit(cropped, (x, y_deb))
                 self.normal[y_deb:y_fin-1, x] = i[4]
         if random.random()<0.01:
+            print("saving normalmap")
             np.save("normal.npy", self.normal)
     
 #    def getX_player(self):
