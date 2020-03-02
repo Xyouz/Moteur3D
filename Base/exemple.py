@@ -97,7 +97,7 @@ while not done:
         ##test souris
         pos = pygame.mouse.get_pos()[0]
 
-        diff = (PROJ_WIDTH //2 ) - pos
+        diff = pos - (PROJ_WIDTH //2 )
         if abs(diff) < sensi:
             vit_rad = 0
         else:
