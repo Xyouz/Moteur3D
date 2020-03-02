@@ -24,7 +24,7 @@ import random
 import time
 import numpy as np
 
-import matplotlib.pyplot as plt
+import shader
 
 DEGTORAD = math.pi/180
 
@@ -98,6 +98,7 @@ class Scene():
         self.Map = np.array(Map)
         self.PROJ_WIDTH, self.PROJ_HEIGHT = size
         self.normal = np.zeros((self.PROJ_HEIGHT, self.PROJ_WIDTH, 3))
+        self.texture = np.zeros((self.PROJ_HEIGHT, self.PROJ_WIDTH, 3))
         self.xyz = np.zeros_like(self.normal)
         self.textures = textures
         self.X_player, self.Y_player = X, Y
@@ -222,9 +223,12 @@ class Scene():
         """
         # Le mapping est a revoir
         dist = map((lambda i:self.raycast(self.Angle + (i- (self.PROJ_WIDTH // 2)) * self.RAY_ANGLE)), range(self.PROJ_WIDTH))
-        self.screen.fill(white)
-        pygame.draw.rect(self.screen, black, [0, self.PROJ_HEIGHT / 2, self.PROJ_WIDTH, self.PROJ_HEIGHT])
-        pygame.draw.rect(self.screen, white, [0, 0, self.PROJ_WIDTH, self.PROJ_HEIGHT / 2])
+        #self.screen.fill(white)
+        #pygame.draw.rect(self.screen, black, [0, self.PROJ_HEIGHT / 2, self.PROJ_WIDTH, self.PROJ_HEIGHT])
+        #pygame.draw.rect(self.screen, white, [0, 0, self.PROJ_WIDTH, self.PROJ_HEIGHT / 2])
+
+        self.texture[:self.PROJ_HEIGHT//2,:] = white
+        self.texture[self.PROJ_HEIGHT//2:,:] = black
 
         self.normal[:self.PROJ_HEIGHT//2,:] = [0.,0.,-1.]
         self.normal[self.PROJ_HEIGHT//2:,:] = [0.,0.,1.]
@@ -234,10 +238,16 @@ class Scene():
             y_fin = int((self.PROJ_HEIGHT + i[0])/2)
             #if i[1] == 1:
             if i[3] != 0:
-                cropped = self.textures[i[3]].subsurface(i[2], 0, 1, 64)
-                cropped = pygame.transform.scale(cropped, (1, y_fin-y_deb))
-                self.screen.blit(cropped, (x, y_deb))
+                #cropped = self.textures[i[3]].subsurface(i[2], 0, 1, 64)
+                #cropped = pygame.transform.scale(cropped, (1, y_fin-y_deb))
+                #self.screen.blit(cropped, (x, y_deb))
                 self.normal[y_deb:y_fin-1, x] = i[4]
+                #self.texture[y_deb:y_fin-1, x] = cropped 
+        
+        Z = 255*(1 + self.normal) / 2
+        surf = pygame.surfarray.make_surface(Z.transpose(1,0,2))
+        self.screen.blit(surf, (0, 0))
+
         if random.random()<0.01:
             print("saving normalmap")
             np.save("normal.npy", self.normal)
